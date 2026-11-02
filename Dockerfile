@@ -19,4 +19,4 @@ COPY --chown=lendup:lendup alembic ./alembic
 COPY --chown=lendup:lendup alembic.ini pyproject.toml ./
 USER lendup
 EXPOSE 8082
-CMD ["uvicorn", "lendup_reputation.main:app", "--host", "0.0.0.0", "--port", "8082", "--proxy-headers", "--forwarded-allow-ips=*"]
+CMD ["python", "-m", "lendup_reputation.server"]

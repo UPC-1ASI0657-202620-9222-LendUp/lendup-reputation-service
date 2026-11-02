@@ -75,7 +75,7 @@ def test_third_party_is_rejected() -> None:
         )
 
 
-def test_unknown_loan_is_rejected() -> None:
+def test_unknown_or_not_finalized_loan_without_projection_is_rejected() -> None:
     service, _, loan = setup_service()
     with pytest.raises(LoanNotFoundError):
         service.registrar_evaluacion(

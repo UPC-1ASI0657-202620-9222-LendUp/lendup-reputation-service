@@ -12,6 +12,10 @@
 - Arquitectura: fronteras de imports y delegación.
 - Integración: migraciones MySQL 8.4, Inbox idempotente/atrasado, restricción concurrente y Outbox;
   RabbitMQ real con entrega persistente confirmada.
+- Transporte: ACK posterior a commit, retry durable, límite/DLQ, correlation ID, reconexión y
+  topología durable.
+- Configuración production: documentación deshabilitada por defecto, TLS externo y proxies
+  confiables explícitos.
 
 ## Comandos
 

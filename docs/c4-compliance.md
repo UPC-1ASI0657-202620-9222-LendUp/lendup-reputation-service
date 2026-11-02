@@ -10,7 +10,7 @@
 | EvaluacionRepository | `src/lendup_reputation/application/ports.py` | Puerto de persistencia |
 | EvaluacionRepositoryImpl | `src/lendup_reputation/infrastructure/persistence/repository.py` | Adaptador SQLAlchemy/MySQL |
 | DomainEventPublisher | `src/lendup_reputation/application/ports.py` | Puerto de registro Outbox |
-| MessageBrokerAdapter | `src/lendup_reputation/infrastructure/messaging/outbox.py` | Publicación RabbitMQ confirmada |
+| MessageBrokerAdapter | `src/lendup_reputation/infrastructure/messaging/outbox.py` y `consumer.py` | Publicación confirmada y transporte completo del consumidor |
 
 La denominación `ReputacionCalculator` de la figura corresponde a `ReputationCalculator` en el
 texto y en el código. Se conserva el segundo nombre para unificar el lenguaje técnico del informe.

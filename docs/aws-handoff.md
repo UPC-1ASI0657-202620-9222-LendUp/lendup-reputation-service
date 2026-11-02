@@ -7,7 +7,7 @@ Este documento describe requisitos, no inventa recursos ni credenciales AWS.
 | Puerto | TCP 8082 |
 | Imagen propuesta | `fabriciofabianquispebarzola/lendup-reputation-service:<release-tag>` |
 | Plataforma | `linux/amd64` |
-| API command | `uvicorn lendup_reputation.main:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=*` |
+| API command | `python -m lendup_reputation.server` |
 | Consumer | `python -m lendup_reputation.workers.loan_consumer` |
 | Outbox | `python -m lendup_reputation.workers.outbox_publisher` |
 | Migración | `alembic upgrade head` como job previo y único |
@@ -20,8 +20,10 @@ Este documento describe requisitos, no inventa recursos ni credenciales AWS.
 No secretas: `ENVIRONMENT`, `API_PORT`, `LOG_LEVEL`, `FIREBASE_PROJECT_ID`,
 `FIREBASE_CHECK_REVOKED`, `REQUIRE_VERIFIED_EMAIL`, `IDENTITY_BASE_URL`, `IDENTITY_ME_PATH`,
 timeouts, nombres RabbitMQ, flags de workers, `CORS_ORIGINS`, `DOCS_ENABLED`.
+También `PROXY_HEADERS_ENABLED`, `TRUSTED_PROXY_IPS` y parámetros de retry/reconexión.
 
-Secretas: `DATABASE_URL`, `RABBITMQ_URL` y credenciales Firebase ADC/workload identity. Deben venir de
+Secretas: `DATABASE_URL`, `RABBITMQ_URL` y credenciales Firebase ADC/workload identity. MySQL exige
+CA montado y `DATABASE_SSL_CA`; RabbitMQ exige `amqps://`. Deben venir de
 un gestor de secretos o rol de workload; nunca de la imagen, repositorio o logs.
 
 ## Dependencias

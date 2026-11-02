@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -16,6 +16,7 @@ from lendup_reputation.config.settings import Settings, get_settings
 from lendup_reputation.domain.exceptions import DuplicateRatingError
 from lendup_reputation.infrastructure.messaging.contracts import PrestamoFinalizadoV1
 from lendup_reputation.infrastructure.messaging.inbox import LoanProjectionConsumer
+from lendup_reputation.infrastructure.messaging.outbox import OutboxPublisher
 from lendup_reputation.infrastructure.persistence.database import (
     create_database_engine,
     create_session_factory,
@@ -87,6 +88,27 @@ def test_inbox_is_idempotent_and_stale_event_is_ignored(mysql_engine: Engine) ->
         assert projected is not None and projected.aggregate_version == 1
 
 
+def test_unversioned_redelivery_cannot_replace_versioned_projection(mysql_engine: Engine) -> None:
+    factory = create_session_factory(mysql_engine)
+    consumer = LoanProjectionConsumer(factory)
+    original = event()
+    assert consumer.process(original) is True
+    unversioned = original.model_copy(
+        update={
+            "event_id": uuid4(),
+            "aggregate_version": None,
+            "prestamista_usuario_id": uuid4(),
+            "correlation_id": uuid4(),
+        }
+    )
+    assert consumer.process(unversioned) is False
+    with factory() as session:
+        projected = session.get(EvaluableLoanModel, original.prestamo_id)
+        assert projected is not None
+        assert projected.prestamista_usuario_id == original.prestamista_usuario_id
+        assert session.get(ProcessedEventModel, unversioned.event_id) is not None
+
+
 def test_concurrent_rating_has_one_commit_and_one_logical_event(mysql_engine: Engine) -> None:
     factory = create_session_factory(mysql_engine)
     loan = event()
@@ -124,3 +146,41 @@ def test_concurrent_rating_has_one_commit_and_one_logical_event(mysql_engine: En
         )
         assert ratings == 1
         assert events == 1
+
+
+def test_outbox_is_recoverable_after_transient_broker_failure(mysql_engine: Engine) -> None:
+    factory = create_session_factory(mysql_engine)
+    outbox_id = uuid4()
+    with factory.begin() as session:
+        session.add(
+            OutboxEventModel(
+                id=outbox_id,
+                event_type="CalificacionRegistrada.v1",
+                payload={"event_id": str(outbox_id), "event_type": "CalificacionRegistrada"},
+                occurred_at=datetime.now(UTC),
+                attempts=0,
+            )
+        )
+
+    class Broker:
+        fail = True
+        published = 0
+
+        def publish(self, _payload: object, _event_id: object) -> None:
+            if self.fail:
+                raise RuntimeError("broker unavailable")
+            self.published += 1
+
+    broker = Broker()
+    publisher = OutboxPublisher(factory, broker, Settings())  # type: ignore[arg-type]
+    assert publisher.publish_batch() == 0
+    with factory.begin() as session:
+        row = session.get(OutboxEventModel, outbox_id, with_for_update=True)
+        assert row is not None and row.attempts == 1 and row.published_at is None
+        row.next_attempt_at = datetime.now(UTC) - timedelta(seconds=1)
+    broker.fail = False
+    assert publisher.publish_batch() == 1
+    with factory() as session:
+        row = session.get(OutboxEventModel, outbox_id)
+        assert row is not None and row.published_at is not None
+    assert broker.published == 1
