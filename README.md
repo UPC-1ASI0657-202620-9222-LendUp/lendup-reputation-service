@@ -77,3 +77,5 @@ ADC o secretos montados se proporcionan en runtime y nunca se incluyen en la ima
 - [Contratos de integración](docs/integration-contracts.md)
 - [Pruebas](docs/testing.md)
 - [Handoff AWS](docs/aws-handoff.md)
+- [Entrega a DevOps](docs/devops-handoff.md)
+- [Handoff frontend](docs/frontend-handoff.md)

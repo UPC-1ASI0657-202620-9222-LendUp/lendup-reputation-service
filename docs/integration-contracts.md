@@ -37,6 +37,10 @@ deduplican por `event_id`.
 Los nombres locales de exchange, colas y routing keys del `.env.example` son propuestas operativas,
 no contratos definitivos.
 
+Los eventos sin versión no reemplazan una proyección existente; una versión menor o igual tampoco.
+Solo el tipo estricto `PrestamoFinalizado` habilita evaluación: cancelación, fechas o estados del
+navegador no son señales válidas.
+
 ## PENDIENTE DE VALIDACIÓN
 
 - Payload, tipo, versión y ordenamiento emitidos realmente por Préstamos.
@@ -48,3 +52,5 @@ no contratos definitivos.
 
 Hasta cerrar estos puntos, `LOAN_SUBSCRIPTION_ENABLED=false` y
 `OUTBOX_PUBLISHER_ENABLED=false` son los valores seguros por defecto.
+
+Los hallazgos de compatibilidad de UI están en `docs/frontend-handoff.md`.

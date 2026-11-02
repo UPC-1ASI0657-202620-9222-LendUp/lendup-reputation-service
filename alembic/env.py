@@ -10,7 +10,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", get_settings().database_url.get_secret_value())
+settings = get_settings()
+config.set_main_option("sqlalchemy.url", settings.database_url.get_secret_value())
 target_metadata = Base.metadata
 
 
@@ -27,10 +28,14 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    connect_args: dict[str, object] = {}
+    if settings.database_ssl_ca:
+        connect_args["ssl"] = {"ca": settings.database_ssl_ca}
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
