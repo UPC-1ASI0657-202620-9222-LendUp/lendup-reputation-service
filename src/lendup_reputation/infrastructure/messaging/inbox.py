@@ -26,6 +26,9 @@ class LoanProjectionConsumer:
             if session.get(ProcessedEventModel, event.event_id) is not None:
                 return False
             existing = session.get(EvaluableLoanModel, event.prestamo_id)
+            if existing is not None and event.aggregate_version is None:
+                self._mark_processed(session, event)
+                return False
             if (
                 existing is not None
                 and event.aggregate_version is not None

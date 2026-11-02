@@ -7,8 +7,12 @@ from lendup_reputation.config.settings import Settings
 
 
 def create_database_engine(settings: Settings) -> Engine:
+    connect_args: dict[str, object] = {}
+    if settings.database_ssl_ca:
+        connect_args["ssl"] = {"ca": settings.database_ssl_ca}
     return create_engine(
         settings.database_url.get_secret_value(),
+        connect_args=connect_args,
         pool_pre_ping=True,
         pool_recycle=1800,
         future=True,

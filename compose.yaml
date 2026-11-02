@@ -16,6 +16,7 @@ x-app: &app
     RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
     RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
     RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
+    RABBITMQ_RETRY_QUEUE: ${RABBITMQ_RETRY_QUEUE:-lendup.reputation.loan-finalized.v1.retry}
   restart: unless-stopped
   networks: [reputation]
 
@@ -92,6 +93,7 @@ services:
       RABBITMQ_LOAN_QUEUE: ${RABBITMQ_LOAN_QUEUE:-lendup.reputation.loan-finalized.v1}
       RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
       RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
+      RABBITMQ_RETRY_QUEUE: ${RABBITMQ_RETRY_QUEUE:-lendup.reputation.loan-finalized.v1.retry}
       LOAN_SUBSCRIPTION_ENABLED: "true"
     depends_on:
       api: {condition: service_healthy}

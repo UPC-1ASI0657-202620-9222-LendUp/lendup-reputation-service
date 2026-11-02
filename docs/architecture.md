@@ -18,10 +18,18 @@ El flujo de escritura es:
 6. El publisher independiente envía con delivery persistente y publisher confirms.
 7. Solo tras confirmación se marca el Outbox como publicado.
 
+El transporte de entrada vive en
+`infrastructure/messaging/consumer.py`: encapsula conexión, topología, suscripción, ACK/NACK,
+retry/DLQ y reconexión. El worker solo configura dependencias, señales y ejecuta el adaptador.
+
 El flujo de entrada de Préstamos valida un esquema canónico v1, aplica proyección y
 `processed_events` en una transacción, y hace ACK después del commit. Los errores transitorios pasan
 por una cola retry con TTL/backoff; tras cinco intentos se envían a DLQ. Eventos inválidos o de
 versión incompatible van directamente a DLQ.
+
+Un evento sin `aggregate_version` solo puede crear una proyección inexistente; nunca reemplaza una
+proyección previa. Una versión menor o igual también se registra como procesada sin mutar el estado.
+Una cancelación o una fecha alcanzada no se interpreta como finalización.
 
 ## Consistencia y concurrencia
 
