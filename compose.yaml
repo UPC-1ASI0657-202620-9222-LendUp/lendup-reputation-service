@@ -1,0 +1,119 @@
+name: lendup-reputation
+
+x-app: &app
+  build:
+    context: .
+    platforms: ["linux/amd64"]
+  image: lendup-reputation-service:local
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DATABASE_URL: mysql+pymysql://lendup:${MYSQL_PASSWORD:-lendup-local}@mysql:3306/lendup_reputacion?charset=utf8mb4
+    RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
+    RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
+    RABBITMQ_LOAN_QUEUE: ${RABBITMQ_LOAN_QUEUE:-lendup.reputation.loan-finalized.v1}
+    RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
+    RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
+    RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
+  restart: unless-stopped
+  networks: [reputation]
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: lendup_reputacion
+      MYSQL_USER: lendup
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lendup-local}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-local-only}
+    ports: ["3307:3306"]
+    volumes: ["mysql-data:/var/lib/mysql"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "--protocol=tcp",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p${MYSQL_ROOT_PASSWORD:-root-local-only}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [reputation]
+
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: lendup
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-lendup-local}
+    ports: ["5673:5672", "15673:15672"]
+    volumes: ["rabbitmq-data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [reputation]
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      mysql: {condition: service_healthy}
+
+  api:
+    <<: *app
+    ports: ["8082:8082"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/health/ready', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  loan-consumer:
+    <<: *app
+    command: ["python", "-m", "lendup_reputation.workers.loan_consumer"]
+    profiles: ["messaging"]
+    environment:
+      DATABASE_URL: mysql+pymysql://lendup:${MYSQL_PASSWORD:-lendup-local}@mysql:3306/lendup_reputacion?charset=utf8mb4
+      RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
+      RABBITMQ_LOAN_QUEUE: ${RABBITMQ_LOAN_QUEUE:-lendup.reputation.loan-finalized.v1}
+      RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
+      RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
+      LOAN_SUBSCRIPTION_ENABLED: "true"
+    depends_on:
+      api: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+
+  outbox-publisher:
+    <<: *app
+    command: ["python", "-m", "lendup_reputation.workers.outbox_publisher"]
+    profiles: ["messaging"]
+    environment:
+      DATABASE_URL: mysql+pymysql://lendup:${MYSQL_PASSWORD:-lendup-local}@mysql:3306/lendup_reputacion?charset=utf8mb4
+      RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
+      RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
+      OUTBOX_PUBLISHER_ENABLED: "true"
+    depends_on:
+      api: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+
+volumes:
+  mysql-data:
+  rabbitmq-data:
+
+networks:
+  reputation:
