@@ -1,0 +1,1 @@
+"""RabbitMQ inbox/outbox adapters."""

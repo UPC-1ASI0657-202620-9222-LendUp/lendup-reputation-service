@@ -1,36 +1,35 @@
-
-# Python
+.venv/
+.uv-cache/
+.env
 __pycache__/
 *.py[cod]
-*.egg-info/
-dist/
-build/
-
-# Entornos virtuales
-.venv/
-venv/
-
-# Configuración privada
-.env
-.env.*
-!.env.example
-.secrets/
-*.pem
-*.key
-*service-account*.json
-
-# Pruebas y calidad
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+dist/
+build/
+
+# Additional environments and secrets
+.env.*
+!.env.example
+.secrets/
+*.pem
+*.key
+*.p12
+*service-account*.json
+*serviceAccount*.json
+*adminsdk*.json
+
+# Additional Python files
+venv/
+*.egg-info/
 
 # IDE
 .vscode/settings.json
 .idea/
 
-# Sistema operativo
+# Operating system
 .DS_Store
 Thumbs.db
-  
