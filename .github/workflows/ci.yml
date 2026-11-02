@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main, "feature/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.6"
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv lock --check
+      - run: uv sync --all-groups --frozen
+      - run: uv run ruff check .
+      - run: uv run mypy src
+      - run: uv run pytest -m "not integration" --cov=lendup_reputation --cov-report=term-missing -q
+      - run: uv run python scripts/export_openapi.py
+      - run: git diff --exit-code docs/openapi.json
+
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      RUN_INTEGRATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.6"
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-groups --frozen
+      - run: uv run pytest -m integration -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: lendup-reputation-service:ci

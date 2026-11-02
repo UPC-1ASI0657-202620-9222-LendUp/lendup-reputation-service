@@ -1,0 +1,72 @@
+[project]
+name = "lendup-reputation-service"
+version = "0.1.0"
+description = "LendUp reputation and ratings microservice"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic==1.17.1",
+  "fastapi==0.120.4",
+  "firebase-admin==7.1.0",
+  "httpx==0.28.1",
+  "pika==1.3.2",
+  "pydantic==2.12.3",
+  "pydantic-settings==2.11.0",
+  "pymysql==1.1.2",
+  "sqlalchemy==2.0.44",
+  "uvicorn[standard]==0.38.0",
+]
+
+[dependency-groups]
+dev = [
+  "mypy==1.18.2",
+  "pytest==8.4.2",
+  "pytest-asyncio==1.2.0",
+  "pytest-cov==7.0.0",
+  "ruff==0.14.3",
+  "testcontainers[mysql,rabbitmq]==4.13.2",
+  "types-pika==1.2.0b1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lendup_reputation"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+exclude = ["alembic"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+  "integration: requires Docker and real infrastructure",
+]
+
+[tool.coverage.run]
+source = ["lendup_reputation"]
+branch = true
+omit = [
+  "*/config/*",
+  "*/infrastructure/*",
+  "*/workers/*",
+  "*/main.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

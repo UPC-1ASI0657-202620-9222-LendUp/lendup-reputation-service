@@ -1,0 +1,33 @@
+.git
+.github
+.venv
+.env
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+tests
+docs
+*.pyc
+
+# Runtime secrets and credentials
+.env.*
+**/.env
+**/.env.*
+.secrets/
+**/.secrets/
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*service-account*.json
+**/*serviceAccount*.json
+**/*adminsdk*.json
+
+# Local development
+.uv-cache/
+venv/
+.idea/
+.vscode/
