@@ -4,9 +4,9 @@ Microservicio FastAPI de reputación y calificaciones de LendUp. Implementa RF34
 US30 con arquitectura hexagonal, MySQL por servicio, consumidor idempotente y Transactional
 Outbox para RabbitMQ.
 
-## Estado verificable
+## Estado
 
-**LISTO PARA INTEGRACIÓN.** Los contratos HTTP con el frontend y el endpoint de resolución de
+Los contratos HTTP con el frontend y el endpoint de resolución de
 Identidad fueron comprobados contra los repositorios locales. La integración productiva con
 Préstamos, RabbitMQ, API Gateway e Identidad permanece pendiente de configuración/validación
 externa; por eso la suscripción RabbitMQ está desactivada por defecto y las operaciones protegidas
