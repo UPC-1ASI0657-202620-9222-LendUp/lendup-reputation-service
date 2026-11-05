@@ -31,7 +31,7 @@ un gestor de secretos o rol de workload; nunca de la imagen, repositorio o logs.
 - MySQL 8.4 propio, charset utf8mb4, backups, cifrado y migración previa.
 - RabbitMQ durable con permisos mínimos, TLS, exchange/colas/DLQ validados y monitoreo de profundidad.
 - Identidad disponible vía HTTPS para resolución `/api/v1/estudiantes/me`.
-- Firebase proyecto `lendup-3cb42` mediante ADC/workload identity.
+- Firebase compartido `lendup-desarrollo` mediante ADC/workload identity del mismo proyecto. Tokens y credenciales de `lendup-3cb42` deben rechazarse y no se migran entre proyectos.
 - Tres workloads desplegables independientemente: API, consumer y publisher.
 
 ## Pendiente antes de producción

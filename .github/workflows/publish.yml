@@ -10,6 +10,7 @@ permissions:
 env:
   IMAGE_NAME: fabriciofabianquispebarzola/lendup-reputation-service
   RUN_INTEGRATION: "1"
+  FIREBASE_PROJECT_ID: lendup-desarrollo
 
 jobs:
   validate-build-publish:

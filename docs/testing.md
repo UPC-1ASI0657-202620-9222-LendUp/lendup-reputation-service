@@ -31,6 +31,10 @@ uv run pytest -m integration -q
 Las pruebas `integration` requieren Docker; si `RUN_INTEGRATION` no vale `1`, pytest reporta el skip
 de forma explícita. CI posee un job separado con Testcontainers. En algunos sandboxes Windows,
 Starlette TestClient necesita ejecución fuera del aislamiento porque AnyIO crea un socketpair local.
+
+`tests/unit/test_security.py` verifica la audiencia `lendup-desarrollo` y rechaza expresamente
+`lendup-3cb42`; `test_production_settings.py` confirma que el Project ID es obligatorio y no admite
+otro proyecto. Una aceptación real requiere un ID token legítimo del Firebase compartido.
 El umbral de cobertura del job rápido mide dominio, aplicación e interfaz HTTP; infraestructura y
 workers se verifican en el job Testcontainers separado y se excluyen de ese porcentaje para no
 confundir código no ejecutado con cobertura unitaria.

@@ -26,7 +26,10 @@ class FirebaseTokenVerifier:
                 credentials.ApplicationDefault(),
                 {"projectId": self._settings.firebase_project_id},
             )
-        return auth, firebase_admin.get_app()
+        app = firebase_admin.get_app()
+        if app.project_id != self._settings.firebase_project_id:
+            raise RuntimeError("La aplicación Firebase inicializada pertenece a otro proyecto")
+        return auth, app
 
     def verify(self, token: str) -> str:
         try:

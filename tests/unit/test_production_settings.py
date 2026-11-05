@@ -12,6 +12,7 @@ def production_settings(**overrides: object) -> Settings:
         "database_ssl_ca": "/run/secrets/rds-ca.pem",
         "rabbitmq_url": "amqps://user:secret@rabbitmq/%2F",
         "identity_base_url": "https://identity.internal",
+        "firebase_project_id": "lendup-desarrollo",
         "cors_origins": ["https://app.lendup.example"],
     }
     values.update(overrides)
@@ -53,3 +54,9 @@ def test_production_accepts_explicit_trusted_proxies_and_docs_opt_in() -> None:
     )
     assert settings.docs_enabled is True
     assert settings.trusted_proxy_ips == ["10.0.0.10", "10.0.0.11"]
+
+
+@pytest.mark.parametrize("project_id", ["lendup-3cb42", "other-project", ""])
+def test_rejects_non_shared_firebase_project(project_id: str) -> None:
+    with pytest.raises(ValidationError):
+        production_settings(firebase_project_id=project_id)

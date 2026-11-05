@@ -25,7 +25,7 @@ concurrencia. API, consumer y publisher son procesos independientes.
 
 - `ENVIRONMENT=production`, `API_HOST`, `API_PORT`, `LOG_LEVEL`.
 - `DATABASE_URL` y `DATABASE_SSL_CA`.
-- `FIREBASE_PROJECT_ID=lendup-3cb42`, `FIREBASE_CHECK_REVOKED=true`,
+- `FIREBASE_PROJECT_ID=lendup-desarrollo`, `FIREBASE_CHECK_REVOKED=true`,
   `REQUIRE_VERIFIED_EMAIL=true`.
 - `IDENTITY_BASE_URL` HTTPS, `IDENTITY_ME_PATH=/api/v1/estudiantes/me`, timeout.
 - `CORS_ORIGINS`, `DOCS_ENABLED=false` salvo habilitación explícita.
@@ -48,7 +48,8 @@ confirmados.
 ### Secretos externos
 
 `DATABASE_URL`, `RABBITMQ_URL`, credenciales Docker Hub y credenciales Firebase mediante
-ADC/workload identity. El CA MySQL se monta como archivo y se referencia con `DATABASE_SSL_CA`.
+ADC/workload identity de `lendup-desarrollo`. El JSON local se monta read-only únicamente en la API;
+consumer, publisher y migración no reciben credenciales Firebase. El CA MySQL se monta como archivo y se referencia con `DATABASE_SSL_CA`.
 No montar secretos dentro de la imagen ni enviarlos a logs.
 
 ### Contratos

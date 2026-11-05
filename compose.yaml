@@ -1,22 +1,22 @@
 name: lendup-reputation
 
+x-common-environment: &common-environment
+  DATABASE_URL: mysql+pymysql://lendup:${MYSQL_PASSWORD:-lendup-local}@mysql:3306/lendup_reputacion?charset=utf8mb4
+  RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
+  RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
+  RABBITMQ_LOAN_QUEUE: ${RABBITMQ_LOAN_QUEUE:-lendup.reputation.loan-finalized.v1}
+  RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
+  RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
+  RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
+  RABBITMQ_RETRY_QUEUE: ${RABBITMQ_RETRY_QUEUE:-lendup.reputation.loan-finalized.v1.retry}
+  FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID required}
+
 x-app: &app
   build:
     context: .
     platforms: ["linux/amd64"]
   image: lendup-reputation-service:local
-  env_file:
-    - path: .env
-      required: false
-  environment:
-    DATABASE_URL: mysql+pymysql://lendup:${MYSQL_PASSWORD:-lendup-local}@mysql:3306/lendup_reputacion?charset=utf8mb4
-    RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
-    RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
-    RABBITMQ_LOAN_QUEUE: ${RABBITMQ_LOAN_QUEUE:-lendup.reputation.loan-finalized.v1}
-    RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
-    RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
-    RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
-    RABBITMQ_RETRY_QUEUE: ${RABBITMQ_RETRY_QUEUE:-lendup.reputation.loan-finalized.v1.retry}
+  environment: *common-environment
   restart: unless-stopped
   networks: [reputation]
 
@@ -72,6 +72,17 @@ services:
 
   api:
     <<: *app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *common-environment
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-service-account.json
+    volumes:
+      - type: bind
+        source: ${FIREBASE_CREDENTIALS_HOST_PATH:?FIREBASE_CREDENTIALS_HOST_PATH required}
+        target: /run/secrets/firebase-service-account.json
+        read_only: true
     ports: ["8082:8082"]
     depends_on:
       migrate: {condition: service_completed_successfully}
@@ -94,6 +105,7 @@ services:
       RABBITMQ_LOAN_ROUTING_KEY: ${RABBITMQ_LOAN_ROUTING_KEY:-loans.loan-finalized.v1}
       RABBITMQ_DLQ: ${RABBITMQ_DLQ:-lendup.reputation.loan-finalized.v1.dlq}
       RABBITMQ_RETRY_QUEUE: ${RABBITMQ_RETRY_QUEUE:-lendup.reputation.loan-finalized.v1.retry}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID required}
       LOAN_SUBSCRIPTION_ENABLED: "true"
     depends_on:
       api: {condition: service_healthy}
@@ -108,6 +120,7 @@ services:
       RABBITMQ_URL: amqp://lendup:${RABBITMQ_PASSWORD:-lendup-local}@rabbitmq:5672/%2F
       RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-lendup.events}
       RABBITMQ_RATING_ROUTING_KEY: ${RABBITMQ_RATING_ROUTING_KEY:-reputation.rating-registered.v1}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID required}
       OUTBOX_PUBLISHER_ENABLED: "true"
     depends_on:
       api: {condition: service_healthy}

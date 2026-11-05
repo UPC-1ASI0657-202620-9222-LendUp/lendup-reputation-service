@@ -40,7 +40,7 @@ class FakeAuth:
 
 
 def verifier(result: dict[str, Any] | Exception) -> FirebaseTokenVerifier:
-    instance = FirebaseTokenVerifier(Settings())
+    instance = FirebaseTokenVerifier(Settings(firebase_project_id="lendup-desarrollo"))
     auth = FakeAuth(result)
     instance._app = lambda: (auth, object())  # type: ignore[method-assign]
     return instance
@@ -48,7 +48,7 @@ def verifier(result: dict[str, Any] | Exception) -> FirebaseTokenVerifier:
 
 def valid_claims() -> dict[str, Any]:
     return {
-        "aud": "lendup-3cb42",
+        "aud": "lendup-desarrollo",
         "uid": "firebase-uid",
         "email_verified": True,
     }
@@ -66,11 +66,12 @@ def test_invalid_expired_and_revoked_tokens_fail(error: Exception) -> None:
         verifier(error).verify("token")
 
 
-def test_other_project_and_unverified_email_fail() -> None:
+def test_old_or_other_project_and_unverified_email_fail() -> None:
     claims = valid_claims()
-    claims["aud"] = "other-project"
-    with pytest.raises(AuthenticationError):
-        verifier(claims).verify("token")
+    for project_id in ("lendup-3cb42", "other-project"):
+        claims["aud"] = project_id
+        with pytest.raises(AuthenticationError):
+            verifier(claims).verify("token")
     claims = valid_claims()
     claims["email_verified"] = False
     with pytest.raises(AuthenticationError):
@@ -79,7 +80,9 @@ def test_other_project_and_unverified_email_fail() -> None:
 
 def test_identity_resolution_is_fail_closed_without_configuration() -> None:
     with pytest.raises(IdentityUnavailableError):
-        HttpIdentityResolver(Settings(identity_base_url=None)).resolve_internal_user_id(
+        HttpIdentityResolver(
+            Settings(firebase_project_id="lendup-desarrollo", identity_base_url=None)
+        ).resolve_internal_user_id(
             "uid", "token"
         )
 
@@ -95,7 +98,12 @@ def test_identity_resolver_uses_me_contract_and_checks_uid(monkeypatch: pytest.M
         )
 
     monkeypatch.setattr(httpx, "get", response)
-    resolver = HttpIdentityResolver(Settings(identity_base_url="https://identity.example"))
+    resolver = HttpIdentityResolver(
+        Settings(
+            firebase_project_id="lendup-desarrollo",
+            identity_base_url="https://identity.example",
+        )
+    )
     assert resolver.resolve_internal_user_id("uid", "token") == internal_id
 
 
@@ -109,6 +117,11 @@ def test_identity_resolver_rejects_unbound_or_mismatched_user(
             200, json={"usuario": {"id": str(uuid4()), "firebase_uid": "another"}}
         ),
     )
-    resolver = HttpIdentityResolver(Settings(identity_base_url="https://identity.example"))
+    resolver = HttpIdentityResolver(
+        Settings(
+            firebase_project_id="lendup-desarrollo",
+            identity_base_url="https://identity.example",
+        )
+    )
     with pytest.raises(IdentityNotResolvedError):
         resolver.resolve_internal_user_id("uid", "token")

@@ -42,7 +42,9 @@ def mysql_engine() -> Engine:
         get_settings.cache_clear()
         config = Config("alembic.ini")
         command.upgrade(config, "head")
-        engine = create_database_engine(Settings(database_url=url))
+        engine = create_database_engine(
+            Settings(firebase_project_id="lendup-desarrollo", database_url=url)
+        )
         yield engine
         engine.dispose()
 
@@ -172,7 +174,11 @@ def test_outbox_is_recoverable_after_transient_broker_failure(mysql_engine: Engi
             self.published += 1
 
     broker = Broker()
-    publisher = OutboxPublisher(factory, broker, Settings())  # type: ignore[arg-type]
+    publisher = OutboxPublisher(
+        factory,
+        broker,
+        Settings(firebase_project_id="lendup-desarrollo"),
+    )  # type: ignore[arg-type]
     assert publisher.publish_batch() == 0
     with factory.begin() as session:
         row = session.get(OutboxEventModel, outbox_id, with_for_update=True)

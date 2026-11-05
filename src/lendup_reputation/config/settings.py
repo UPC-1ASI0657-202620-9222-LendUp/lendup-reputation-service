@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         "mysql+pymysql://lendup:lendup@localhost:3307/lendup_reputacion?charset=utf8mb4"
     )
     database_ssl_ca: str | None = None
-    firebase_project_id: str = "lendup-3cb42"
+    firebase_project_id: str = Field(min_length=1)
     firebase_check_revoked: bool = True
     require_verified_email: bool = True
     identity_base_url: AnyHttpUrl | None = None
@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     def validate_identity_path(cls, value: str) -> str:
         if value != "/api/v1/estudiantes/me":
             raise ValueError("identity_me_path must use the confirmed Identity contract")
+        return value
+
+    @field_validator("firebase_project_id")
+    @classmethod
+    def validate_firebase_project_id(cls, value: str) -> str:
+        if value != "lendup-desarrollo":
+            raise ValueError("FIREBASE_PROJECT_ID must be lendup-desarrollo")
         return value
 
     @model_validator(mode="after")

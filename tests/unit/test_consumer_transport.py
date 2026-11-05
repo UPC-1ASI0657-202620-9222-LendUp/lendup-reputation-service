@@ -59,6 +59,7 @@ class Processor:
 
 def settings(**overrides: Any) -> Settings:
     return Settings(
+        firebase_project_id="lendup-desarrollo",
         rabbitmq_exchange="events",
         rabbitmq_loan_queue="reputation.loans",
         rabbitmq_loan_routing_key="loans.finalized",

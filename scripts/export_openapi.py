@@ -6,7 +6,12 @@ from lendup_reputation.main import create_app
 
 
 def main() -> None:
-    app = create_app(Settings(database_url="mysql+pymysql://openapi:openapi@localhost/openapi"))
+    app = create_app(
+        Settings(
+            firebase_project_id="lendup-desarrollo",
+            database_url="mysql+pymysql://openapi:openapi@localhost/openapi",
+        )
+    )
     target = Path("docs/openapi.json")
     target.write_text(
         json.dumps(app.openapi(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",

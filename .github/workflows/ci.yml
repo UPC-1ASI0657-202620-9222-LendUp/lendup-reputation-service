@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FIREBASE_PROJECT_ID: lendup-desarrollo
+
 jobs:
   quality:
     runs-on: ubuntu-latest

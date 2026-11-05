@@ -30,7 +30,9 @@ Requisitos: Python 3.12, uv, Docker Desktop y Docker Compose.
 
 ```powershell
 Copy-Item .env.example .env
-# Configure IDENTITY_BASE_URL y credenciales externas/ADC según el entorno.
+# Mantenga FIREBASE_PROJECT_ID=lendup-desarrollo y coloque el ADC local en
+# .secrets/firebase-service-account.json; no copie el JSON dentro de la imagen.
+# Configure IDENTITY_BASE_URL y las demás integraciones según el entorno.
 uv sync --all-groups --frozen
 docker compose up -d --build mysql rabbitmq migrate api
 docker compose ps
@@ -67,7 +69,9 @@ Alembic es el único mecanismo de esquema productivo; el servicio no llama
 Firebase Admin valida firma, proyecto/audiencia, emisor, vigencia y revocación. El correo debe estar
 verificado. El Firebase UID se resuelve al UUID interno mediante el contrato confirmado
 `GET /api/v1/estudiantes/me`; no se usa el UID como UUID ni se aceptan cabeceras de identidad.
-ADC o secretos montados se proporcionan en runtime y nunca se incluyen en la imagen.
+ADC o secretos montados se proporcionan en runtime y nunca se incluyen en la imagen. El único
+proyecto admitido es `lendup-desarrollo`; tokens de `lendup-3cb42` se rechazan. Compose monta el
+JSON read-only solo en la API, no en los workers.
 
 ## Documentación
 

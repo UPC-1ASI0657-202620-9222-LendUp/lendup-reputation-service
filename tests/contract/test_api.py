@@ -40,6 +40,7 @@ def client_and_context() -> tuple[TestClient, MemoryStore, PrestamoEvaluable]:
     store.loans[loan.prestamo_id] = loan
     app = create_app(
         Settings(
+            firebase_project_id="lendup-desarrollo",
             database_url="mysql+pymysql://unused:unused@localhost:3307/unused",
             docs_enabled=True,
         )

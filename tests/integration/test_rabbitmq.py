@@ -32,6 +32,7 @@ def test_message_broker_publishes_persistent_confirmed_message() -> None:
         channel.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
         connection.close()
         settings = Settings(
+            firebase_project_id="lendup-desarrollo",
             rabbitmq_url=url,
             rabbitmq_exchange=exchange,
             rabbitmq_rating_routing_key=routing_key,
