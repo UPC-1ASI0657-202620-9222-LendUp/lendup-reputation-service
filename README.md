@@ -45,8 +45,12 @@ La API queda en `http://localhost:8082`; MySQL en `localhost:3307` y RabbitMQ Ma
 docker compose --profile messaging up -d loan-consumer outbox-publisher
 ```
 
-Los nombres de exchange/routing key del `.env.example` son provisionales. No habilite mensajería
-en producción hasta validarlos con el servicio de Préstamos.
+El perfil `messaging` activa `LOAN_SUBSCRIPTION_ENABLED` en el consumidor y
+`OUTBOX_PUBLISHER_ENABLED` en el publicador. Sus valores de integración coinciden con E2E:
+exchange `lendup.domain.events`, entrada `loans.loan-finalized.v1` y salida
+`reputation.rating-registered.v1`. Si el `.env` local conserva el exchange anterior, actualizar
+esa variable al conectar el entorno integrado. Para validar publicación con confirmación se
+necesita una cola enlazada a la routing key de salida en el mismo broker.
 
 ## Desarrollo y migraciones
 
