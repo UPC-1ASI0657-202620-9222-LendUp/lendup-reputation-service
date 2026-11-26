@@ -38,12 +38,14 @@ concurrencia. API, consumer y publisher son procesos independientes.
 - `RABBITMQ_RATING_ROUTING_KEY`, `RABBITMQ_DLQ`, `RABBITMQ_RETRY_QUEUE`.
 - `CONSUMER_MAX_RETRIES`, `CONSUMER_RETRY_BASE_MS`, `CONSUMER_RETRY_MAX_MS` y
   `CONSUMER_RECONNECT_MAX_SECONDS`.
-- `LOAN_SUBSCRIPTION_ENABLED` y `OUTBOX_PUBLISHER_ENABLED`; mantener false hasta validar contrato.
+- Activar `LOAN_SUBSCRIPTION_ENABLED` en el consumidor y `OUTBOX_PUBLISHER_ENABLED` en el
+  publicador del entorno integrado después de provisionar sus enlaces. Compose aplica ambos en el perfil `messaging`.
 
-Valores locales propuestos: exchange `lendup.events`, cola
+Valores verificados en E2E: exchange `lendup.domain.events`, cola
 `lendup.reputation.loan-finalized.v1`, routing de entrada `loans.loan-finalized.v1`, routing de salida
-`reputation.rating-registered.v1`, retry `.retry` y DLQ `.dlq`. No son valores productivos
-confirmados.
+`reputation.rating-registered.v1`, retry `.retry` y DLQ `.dlq`. Comprobar los mismos enlaces,
+permisos y política de operación en el broker del despliegue. El publicador usa `mandatory`
+y confirmaciones, por lo que una salida sin consumidor enlazado conserva el registro para reintento.
 
 ### Secretos externos
 
@@ -56,7 +58,8 @@ No montar secretos dentro de la imagen ni enviarlos a logs.
 
 - REST: `GET /api/v1/estudiantes/{id}/reputacion` y
   `POST /api/v1/prestamos/{id}/calificaciones`.
-- Consume esquema canónico provisional `PrestamoFinalizado.v1`; ACK solo después del commit Inbox.
+- Adapta el evento de finalización de Préstamos al esquema canónico `PrestamoFinalizado.v1`.
+  Confirma el mensaje original después del commit del Inbox o después de confirmar su reenvío al reintento.
 - Publica `CalificacionRegistrada.v1` mediante Outbox y publisher confirms, entrega al menos una vez.
 - `event_id` es la clave de deduplicación y `correlation_id` se preserva.
 

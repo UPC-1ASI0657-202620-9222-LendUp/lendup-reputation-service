@@ -19,7 +19,7 @@ es el UUID interno asociado a `firebase_uid`. El adaptador reenvía el mismo Bea
 válido y, si la respuesta incluye `firebase_uid`, comprueba coincidencia. Ausencia, error o timeout
 fallan cerrados (403/503). No se inventó un endpoint nuevo.
 
-## PROPUESTO
+## Mensajería integrada y esquema interno
 
 ### Esquema canónico interno `PrestamoFinalizado.v1`
 
@@ -34,8 +34,10 @@ Fixture: `contracts/fixtures/calificacion-registrada.v1.json`. Incluye identific
 evaluación, préstamo, evaluador/evaluado, puntaje y fecha. La entrega es al menos una vez; consumidores
 deduplican por `event_id`.
 
-Los nombres locales de exchange, colas y routing keys del `.env.example` son propuestas operativas,
-no contratos definitivos.
+El entorno E2E verificó el exchange `lendup.domain.events`, la entrada
+`loans.loan-finalized.v1` y la salida `reputation.rating-registered.v1`. La cola del consumidor
+es `lendup.reputation.loan-finalized.v1`. El adaptador transforma el evento de Préstamos para el
+esquema canónico interno.
 
 Los eventos sin versión no reemplazan una proyección existente; una versión menor o igual tampoco.
 Solo el tipo estricto `PrestamoFinalizado` habilita evaluación: cancelación, fechas o estados del
@@ -43,14 +45,13 @@ navegador no son señales válidas.
 
 ## PENDIENTE DE VALIDACIÓN
 
-- Payload, tipo, versión y ordenamiento emitidos realmente por Préstamos.
-- Exchange, routing keys, ownership de colas, DLQ, retención y permisos RabbitMQ.
+- Ownership de colas, retención, permisos RabbitMQ y políticas de DLQ en el despliegue.
 - URL final de Identidad/Gateway y disponibilidad del campo `firebase_uid` en producción.
 - Rutas y políticas del API Gateway, CORS y propagación de correlation ID.
 - Política final para enriquecer autores públicos y condición universitaria. Reputación devuelve IDs
   y no replica PII; Identidad sigue siendo propietaria de esos datos.
 
-Hasta cerrar estos puntos, `LOAN_SUBSCRIPTION_ENABLED=false` y
-`OUTBOX_PUBLISHER_ENABLED=false` son los valores seguros por defecto.
+Fuera de un entorno integrado, los flags son falsos por defecto. El perfil Compose
+`messaging` activa cada flag en su worker.
 
 Los hallazgos de compatibilidad de UI están en `docs/frontend-handoff.md`.
