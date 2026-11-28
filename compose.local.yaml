@@ -1,0 +1,6 @@
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:8186:8082"
+    environment:
+      FIREBASE_AUTH_EMULATOR_HOST: host.docker.internal:9099
